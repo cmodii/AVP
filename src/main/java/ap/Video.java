@@ -53,7 +53,7 @@ public class Video {
         } else if (hue < 180.0) {
             return '@'; // green
         } else if (hue < 240.0) {
-            return '$'; // blue
+            return '/'; // blue
         } else if (hue < 300.0) {
             return '%'; // pink
         } else {
@@ -72,20 +72,60 @@ public class Video {
                 BufferedImage image = Converter.convert(Frames.get(i));
                 byte[] pixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
                 StringBuilder data = new StringBuilder();
-                int offset = width / 80;
 
-                for (int p = 0; p < 4000; p++) {
+                int termWdith = 16*4;
+                int termHeight = 9*4;
+                
+                int blockWidth = (int) Math.ceil((double) width / termWdith);
+                int blockHeight = (int) Math.ceil((double) height / termHeight);
+
+                System.out.println("lol here");
+
+                for (int ay = 0; ay < termHeight; ay++) {
+                    for (int ax = 0; ax < termWdith; ax++) {
+
+                        int startX = ax * blockWidth;
+                        int startY = ay * blockHeight;
+                        int endX = Math.min(startX + blockWidth, width);
+                        int endY = Math.min(startY + blockHeight, height);
+
+                        long totalR = 0, totalG = 0, totalB = 0;
+                        int pixelCount = 0;
+
+                        for (int y = startY; y < endY; y++) {
+                            for (int x = startX; x < endX; x++) {
+                                int pixelIndex = (x + y * width) * 3;
+                                totalR += pixels[pixelIndex] & 0xFF;
+                                totalG += pixels[pixelIndex+1] & 0xFF;
+                                totalB += pixels[pixelIndex+2] & 0xFF;
+                                pixelCount++;
+                            }
+                        }
+
+                        byte r = (byte) (totalR / pixelCount);
+                        byte g = (byte) (totalG / pixelCount);
+                        byte b = (byte) (totalB / pixelCount);
+
+                        char pixelSymbol = RGBToSymbol(r, g, b);
+                        data.append(pixelSymbol);
+                    }
+                    data.append("[]\n");
+                }
+
+                /*
+                for (int p = 0; p < 3600; p++) {
                     if (hasAlphaChannel) {
-                        data.append(RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]));
+                        // data.append(RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]));
+                        data.append(RGBToSymbol(pixels[((p % 80) + (p / 80) * width) * 4 + 1], pixels[((p % 80) + (p / 80) * width) * 4 + 2], pixels[((p % 80) + (p / 80) * width) * 4 + 3]));
                     } else {
-                        // data += RGBToSymbol(pixels[(p+offset)*3], pixels[(p+offset)*3+1], pixels[(p+offset)*3+2]);
-                        data.append(RGBToSymbol(pixels[((p % 80) * offset + (p / 80) * offset * width) * 3], pixels[((p % 80) * offset + (p / 80) * offset * width) * 3 + 1], pixels[((p % 80) * offset + (p / 80) * offset * width) * 3 + 2]));
+                        data.append(RGBToSymbol(pixels[((p % 80) + (p / 80) * width) * 3], pixels[((p % 80) + (p / 80) * width) * 3 + 1], pixels[((p % 80) + (p / 80) * width) * 3 + 2]));
                     }
 
                     if (p != 0 && p % 80 == 0) {
                         data.append('\n');
                     }
                 }
+                */
     
                 // Print the frame data
 
@@ -93,7 +133,7 @@ public class Video {
                 //terminal.writer().flush();
 
                 
-                Thread.sleep(1000);
+                Thread.sleep(1000/30);
                 System.out.print("\033\143");
                 //terminal.puts(org.jline.utils.InfoCmp.Capability.clear_screen);
                 //terminal.flush();
