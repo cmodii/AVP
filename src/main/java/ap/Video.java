@@ -8,6 +8,11 @@ import org.bytedeco.javacv.FFmpegFrameGrabber;
 import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
 
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+
+import java.lang.StringBuilder;
+
 public class Video {
     private ArrayList<Frame> Frames = new ArrayList<>();
     private int width;
@@ -57,36 +62,64 @@ public class Video {
     }
 
     public void play() {
+        Terminal terminal = null;
+        Java2DFrameConverter Converter = null;
         try {
-            Java2DFrameConverter Converter = new Java2DFrameConverter();
-            for (int i = 0; i < 500; i++) {
+            terminal = TerminalBuilder.builder().system(true).build();
+            Converter = new Java2DFrameConverter();
+
+            for (int i = 0; i < getLength(); i++) {
                 BufferedImage image = Converter.convert(Frames.get(i));
                 byte[] pixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
-                String data = "";
-                int offset = width / 160;
+                StringBuilder data = new StringBuilder();
+                int offset = width / 80;
 
-                for (int p = 0; p < 14400; p++) {
+                for (int p = 0; p < 4000; p++) {
                     if (hasAlphaChannel) {
-                        data += RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]);
+                        data.append(RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]));
                     } else {
                         // data += RGBToSymbol(pixels[(p+offset)*3], pixels[(p+offset)*3+1], pixels[(p+offset)*3+2]);
-                        data += RGBToSymbol(pixels[((p % 160) * offset + (p / 160) * offset * 1920) * 3], pixels[((p % 160) * offset + (p / 160) * offset * 1920) * 3 + 1], pixels[((p % 160) * offset + (p / 160) * offset * 1920) * 3 + 2]);
+                        data.append(RGBToSymbol(pixels[((p % 80) * offset + (p / 80) * offset * width) * 3], pixels[((p % 80) * offset + (p / 80) * offset * width) * 3 + 1], pixels[((p % 80) * offset + (p / 80) * offset * width) * 3 + 2]));
                     }
 
-                    if (p != 0 && p % 160 == 0) {
-                        data += "\n";
+                    if (p != 0 && p % 80 == 0) {
+                        data.append('\n');
                     }
                 }
     
-                System.out.print(data);
-                Thread.sleep(1000/30);
-                System.out.print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-                System.out.print("\033[H\033[2J"); // clear terminal
-                System.out.flush();
+                // Print the frame data
+
+                terminal.writer().print(data.toString());
+                //terminal.writer().flush();
+
+                
+                Thread.sleep(1000);
+                System.out.print("\033\143");
+                //terminal.puts(org.jline.utils.InfoCmp.Capability.clear_screen);
+                //terminal.flush();
+
+                // System.out.print("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+                // System.out.print("\033[H\033[2J"); // clear terminal
             }
             Converter.close();
         } catch (Exception e) {
             System.err.print(e);
+        }  finally {
+            if (terminal != null) {
+                try {
+                    terminal.close();
+                } catch (Exception e) {
+                    System.err.print(e);
+                }
+            }
+
+            if (Converter != null) {
+                try {
+                    Converter.close();
+                } catch (Exception e) {
+                    System.err.print(e);
+                }
+            }
         }
     }
 
