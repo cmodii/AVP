@@ -9,7 +9,7 @@ import org.bytedeco.javacv.Frame;
 import org.bytedeco.javacv.Java2DFrameConverter;
 
 public class Video {
-    private ArrayList<BufferedImage> Frames = new ArrayList<>();
+    private ArrayList<Frame> Frames = new ArrayList<>();
     private int width;
     private int height;
     private boolean hasAlphaChannel;
@@ -58,12 +58,15 @@ public class Video {
 
     public void play() {
         try {
-            for (int i = 0; i < 100; i++) {
-                BufferedImage image = Frames.get(i);
+            Java2DFrameConverter Converter = new Java2DFrameConverter();
+            System.err.println("here");
+            for (int i = 0; i < 500; i++) {
+                BufferedImage image = Converter.convert(Frames.get(i));
                 byte[] pixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
                 String data = "";
                 int offset = width / 160;
 
+                System.err.println(width + "|" + height);
                 for (int p = 0; p < 14400; p++) {
                     if (hasAlphaChannel) {
                         data += RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]);
@@ -83,6 +86,7 @@ public class Video {
                 System.out.print("\033[H\033[2J"); // clear terminal
                 System.out.flush();
             }
+            Converter.close();
         } catch (Exception e) {
             System.err.print(e);
         }
@@ -97,17 +101,20 @@ public class Video {
             Grabber.start();
             capturedFrame = Grabber.grab();
 
-            while (capturedFrame != null) {
-                Frames.add(Converter.convert(capturedFrame));
+            int frame_control = 0;
+
+            while (capturedFrame != null && frame_control < 500) {
+                Frames.add(capturedFrame.clone());
                 capturedFrame = Grabber.grab();
+                frame_control++;
             }
 
             Grabber.close();
+            
+            height =  Converter.convert(Frames.get(0)).getHeight();
+            width = Converter.convert(Frames.get(0)).getWidth();
+            hasAlphaChannel = Converter.convert(Frames.get(0)).getAlphaRaster() != null;
             Converter.close();
-
-            height = Frames.get(0).getHeight();
-            width = Frames.get(0).getWidth();
-            hasAlphaChannel = Frames.get(0).getAlphaRaster() != null;
         } catch (Exception e) {
             System.err.print(e);
         }
