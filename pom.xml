@@ -28,6 +28,12 @@
       <artifactId>javacv-platform</artifactId>
       <version>1.5.12</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.jline</groupId>
+      <artifactId>jline</artifactId>
+      <version>3.25.1</version>
+    </dependency>
   </dependencies>
 
 </project>
