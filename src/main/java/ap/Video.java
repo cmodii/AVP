@@ -59,14 +59,12 @@ public class Video {
     public void play() {
         try {
             Java2DFrameConverter Converter = new Java2DFrameConverter();
-            System.err.println("here");
             for (int i = 0; i < 500; i++) {
                 BufferedImage image = Converter.convert(Frames.get(i));
                 byte[] pixels = ((DataBufferByte) image.getRaster().getDataBuffer()).getData();
                 String data = "";
                 int offset = width / 160;
 
-                System.err.println(width + "|" + height);
                 for (int p = 0; p < 14400; p++) {
                     if (hasAlphaChannel) {
                         data += RGBToSymbol(pixels[(p+offset)*4+1], pixels[(p+offset)*4+2], pixels[(p+offset)*4+3]);
@@ -101,12 +99,9 @@ public class Video {
             Grabber.start();
             capturedFrame = Grabber.grab();
 
-            int frame_control = 0;
-
-            while (capturedFrame != null && frame_control < 500) {
+            while (capturedFrame != null) {
                 Frames.add(capturedFrame.clone());
                 capturedFrame = Grabber.grab();
-                frame_control++;
             }
 
             Grabber.close();
